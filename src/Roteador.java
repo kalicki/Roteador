@@ -7,11 +7,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Roteador {
-	private final static boolean DEV = true;
-	private final static String lerArquivo = "IPVizinhos.txt";
+	private final static String leitura = "IPVizinhos.txt";
 
 	public static void main(String[] args) throws IOException {
-		String leitura = lerArquivo;
 		String linhaArquivo;
 
 		// Lista de endereço IPs dos vizinhos

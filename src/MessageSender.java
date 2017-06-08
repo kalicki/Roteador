@@ -40,13 +40,15 @@ public class MessageSender implements Runnable {
 			 */
 			sendData = tabela.get_tabela_string().getBytes();
 
-			// Anuncia a tabela de roteamento para cada um dos vizinhos
+			// Compartilha tabela de roteamento na rede (vizinhos)
 			try {
 				for (String vizinho : vizinhos) {
+					String vizinhoSplit[] = vizinho.split(":");
+
 					// registra o IP
-					String ip = vizinho.split(":")[0];
+					String ip = vizinhoSplit[0];
 					// registra a porta se existir, senão usa 5000 como default
-					Integer porta = vizinho.split(":").length > 1 ? Integer.parseInt(vizinho.split(":")[1]) : 5000;
+					Integer porta = vizinhoSplit.length > 1 ? Integer.parseInt(vizinhoSplit[1]) : 5000;
 
 					// Converte string com o IP do vizinho para formato
 					// InetAddress
@@ -57,9 +59,6 @@ public class MessageSender implements Runnable {
 
 					// Realiza envio da mensagem.
 					clientSocket.send(sendPacket);
-
-					System.out.println("Enviando mensagem: " + tabela.get_tabela_string() + " de "
-							+ sendPacket.getAddress() + ":" + sendPacket.getPort());
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
