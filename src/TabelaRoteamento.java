@@ -1,4 +1,6 @@
 import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
@@ -10,9 +12,15 @@ public class TabelaRoteamento {
 
 	private HashMap<String, Rota> tabelaRoteamento;
 	private int tempo = 0;
+	private String ipLocal = null;
 
 	public TabelaRoteamento() {
 		this.tabelaRoteamento = new HashMap<String, Rota>();
+		try {
+			String ipLocal = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -64,38 +72,85 @@ public class TabelaRoteamento {
 		System.out.println("Mensagem: " + tabelas);
 
 		if (tabelas.equals("!")) {
-			this.tabelaRoteamento.put(ip_saida, new Rota(ip_saida, 1, ip_saida));
-			System.out.println("Primeira Inserção");
+			if (!ip_saida.contains(ipLocal)) {
+				this.tabelaRoteamento.put(ip_saida, new Rota(ip_saida, 1, ip_saida));
+				System.out.println("Primeira Inserção");
+			}
 		} else {
 			for (String linha : tabelas.split("\\*")) {
-
 				if (!linha.isEmpty() && linha != null) {
 					String linhaSplit[] = linha.split(";");
 					String ip_destino = linhaSplit[0];
 					Integer metrica = Integer.parseInt(linhaSplit[1]);
-					Rota rotaDestino = this.tabelaRoteamento.get(ip_destino); // .equalsIgnoreCase(endereco);
 
-					if (rotaDestino != null && rotaDestino.getIpSaida().equalsIgnoreCase(ip_destino)) {
-						System.out.println("Entrou aqui");
+					// Adiciona os outros
+					this.tabelaRoteamento.put(ip_destino, new Rota(ip_destino, metrica, ip_saida));
 
-						// else if
-						// ((myRoutingTable.get(tableEntry.getKey()).hopCount) >
-						// (tableEntry.getValue().hopCount)
-						// + getCost(incommingPacket.source)) {
-						System.out.println("Metrica: " + metrica);
-						System.out.println("rotaD Metrica: " + rotaDestino.getMetrica());
-
-						if (metrica < rotaDestino.getMetrica()) {
-							System.out.println("atualiza metrica");
-							rotaDestino.setIpDestino(ip_saida);
-							rotaDestino.setMetrica(rotaDestino.getMetrica() + 1);
-							rotaDestino.updateValidade();
-						}
-					} else if (this.tabelaRoteamento.get(ip_saida) == null) {
-						this.tabelaRoteamento.put(ip_saida, new Rota(ip_saida, 1, ip_destino));
+					if (this.tabelaRoteamento.get(ip_saida) == null) {
+						// Adiciona os outros
+						this.tabelaRoteamento.put(ip_saida, new Rota(ip_saida, 1, ip_saida));
 					}
 
+					Rota rotaDestino = this.tabelaRoteamento.get(ip_destino);
+					if (rotaDestino.getIpDestino()
+							.equalsIgnoreCase(this.tabelaRoteamento.get(ip_saida).getIpDestino())) {
+						// if
+						// (rotaDestino.getIpDestino().contentEquals(ip_saida))
+						// {
+						continue;
+					} else if (this.tabelaRoteamento.get(ip_saida) == null) {
+						Rota novaRota = new Rota(ip_destino, 1, ip_saida);
+						this.tabelaRoteamento.put(ip_destino, novaRota);
+					} else if (rotaDestino
+							.getMetrica() > (metrica + this.tabelaRoteamento.get(ip_saida).getMetrica())) {
+						System.out.println("atualiza metrica");
+						rotaDestino.setIpDestino(ip_saida);
+						rotaDestino.setMetrica((metrica + this.tabelaRoteamento.get(ip_saida).getMetrica()));
+						rotaDestino.updateValidade();
+					}
 				}
+
+				/*
+				 * continue; else if (myRoutingTable.get(tableEntry.getKey()) ==
+				 * null) { RoutingInfo newDest = new
+				 * RoutingInfo(tableEntry.getValue().destPort,
+				 * incommingPacket.source, tableEntry.getValue().hopCount +
+				 * getCost(incommingPacket.source));
+				 * myRoutingTable.put(tableEntry.getValue().destPort, newDest);
+				 * } else if ((myRoutingTable.get(tableEntry.getKey()).hopCount)
+				 * > (tableEntry.getValue().hopCount) +
+				 * getCost(incommingPacket.source)) {
+				 * myRoutingTable.get(tableEntry.getKey()).hopCount =
+				 * tableEntry.getValue().hopCount +
+				 * getCost(incommingPacket.source);
+				 * myRoutingTable.get(tableEntry.getKey()).nextPort =
+				 * incommingPacket.source; }
+				 * 
+				 * if (!linha.isEmpty() && linha != null) { String linhaSplit[]
+				 * = linha.split(";"); String ip_destino = linhaSplit[0];
+				 * Integer metrica = Integer.parseInt(linhaSplit[1]); Rota
+				 * rotaDestino = this.tabelaRoteamento.get(ip_destino); //
+				 * .equalsIgnoreCase(endereco);
+				 * 
+				 * if (rotaDestino != null &&
+				 * rotaDestino.getIpSaida().equalsIgnoreCase(ip_destino)) {
+				 * System.out.println("Entrou aqui");
+				 * 
+				 * // else if //
+				 * ((myRoutingTable.get(tableEntry.getKey()).hopCount) > //
+				 * (tableEntry.getValue().hopCount) // +
+				 * getCost(incommingPacket.source)) { if (metrica <
+				 * rotaDestino.getMetrica()) {
+				 * System.out.println("atualiza metrica");
+				 * rotaDestino.setIpDestino(ip_saida);
+				 * rotaDestino.setMetrica(rotaDestino.getMetrica() + 1);
+				 * rotaDestino.updateValidade(); } } else if
+				 * (this.tabelaRoteamento.get(ip_saida) == null) {
+				 * this.tabelaRoteamento.put(ip_saida, new Rota(ip_saida, 1,
+				 * ip_destino)); }
+				 * 
+				 * }
+				 */
 			}
 		}
 
