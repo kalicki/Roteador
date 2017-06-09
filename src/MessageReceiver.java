@@ -33,20 +33,12 @@ public class MessageReceiver implements Runnable {
 				// Aguarda o recebimento de uma mensagem
 				serverSocket.receive(recebePacote);
 
-				DatagramPacket sender = recebePacote;
-
-				/* Transforma a mensagem em string */
-				// String tabela_string = new String(recebePacote.getData());
-
-				/* Obtem o IP de origem da mensagem */
-				// InetAddress IPAddress = recebePacote;
-
 				System.out.println(
 						"Recebendo: " + recebePacote.getAddress().getHostAddress() + ":" + recebePacote.getPort());
 
 				// Atualiza dados na tabela
 				// synchronized (TabelaRoteamento) {
-				tabela.atualizaTabela(new String(recebePacote.getData()).trim(), sender);
+				tabela.atualizaTabela(new String(recebePacote.getData()).trim(), recebePacote);
 				// }
 			} catch (IOException e) {
 				e.printStackTrace();
