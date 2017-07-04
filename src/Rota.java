@@ -12,7 +12,7 @@ public class Rota {
 		this.ipSaida = ipSaida;
 		this.metrica = metrica;
 		this.status = "Ativo";
-		this.updateValidade();
+		this.atualizaValidade();
 	}
 
 	public String getIpDestino() {
@@ -51,11 +51,11 @@ public class Rota {
 		return this.validade;
 	}
 
-	public LocalDateTime updateValidade() {
-		return this.updateValidade(30);
+	public LocalDateTime atualizaValidade() {
+		return this.atualizaValidade(30);
 	}
 
-	public LocalDateTime updateValidade(int valor) {
+	public LocalDateTime atualizaValidade(int valor) {
 		return this.validade = this.validade.plusSeconds(valor);
 	}
 }

@@ -7,20 +7,15 @@ import java.util.HashMap;
 public class TabelaRoteamento {
 	/*
 	 * Implemente uma estrutura de dados para manter a tabela de roteamento. A
-	 * tabela deve possuir: IP Destino, MÃ©trica e IP de SaÃ­da.
+	 * tabela deve possuir: IP Destino, Métrica e IP de Saída.
 	 */
 
 	private HashMap<String, Rota> tabelaRoteamento;
 	private int tempo = 0;
-	private String ipLocal = null;
+	private String ipLocal = "10.32.148.107";
 
 	public TabelaRoteamento() {
 		this.tabelaRoteamento = new HashMap<String, Rota>();
-		try {
-			String ipLocal = InetAddress.getLocalHost().getHostAddress();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
 	}
 
 	/**
@@ -29,144 +24,66 @@ public class TabelaRoteamento {
 	 * @param tabela_s
 	 * @param sender
 	 */
-	/*
-	 * if
-	 * (this.tabelaRoteamento.get(ip_destino).getIpDestino().equalsIgnoreCase(
-	 * endereco)) {
-	 * 
-	 * } if (myRoutingTable.get(tableEntry.getKey()) == null) { RoutingInfo
-	 * newDest = new RoutingInfo(tableEntry.getValue().destPort,
-	 * incommingPacket.source, tableEntry.getValue().hopCount +
-	 * getCost(incommingPacket.source));
-	 * myRoutingTable.put(tableEntry.getValue().destPort, newDest);
-	 * 
-	 * if (this.tabelaRoteamento.get(ip_destino) == null) {
-	 * this.tabelaRoteamento.put(sender, new Rota(sender, 1, sender));
-	 * 
-	 * new RoutingInfo(tableEntry.getValue().destPort, incommingPacket.source,
-	 * tableEntry.getValue().hopCount + getCost(incommingPacket.source)); }
-	 * 
-	 * if (!this.tabelaRoteamento.containsKey(ip_destino)) {
-	 * this.tabelaRoteamento.put(ip_destino, new Rota(ip_destino, 1,
-	 * ip_destino)); System.out.println("InserÃ§Ã£o auxiliar"); }
-	 * 
-	 * if
-	 * (!this.tabelaRoteamento.get(ip_destino).getIpDestino().equalsIgnoreCase(
-	 * sender)) { System.out.println("IP destino != sender"); if
-	 * (tabelaRoteamento.get(sender).getIpDestino().equals(sender) &&
-	 * tabelaRoteamento.containsKey(sender) == false) {
-	 * this.tabelaRoteamento.put(ip_destino, new Rota(ip_destino, metrica,
-	 * sender));
-	 * 
-	 * } else if (this.tabelaRoteamento.containsKey(ip_destino)) { if
-	 * (this.tabelaRoteamento.get(ip_destino).getMetrica() > metrica) {
-	 * this.tabelaRoteamento.get(ip_destino).setMetrica(metrica);
-	 * this.tabelaRoteamento.get(ip_destino).setIpDestino(sender);
-	 * this.tabelaRoteamento.get(ip_destino).updateValidade(); } } else {
-	 * this.tabelaRoteamento.put(ip_destino, new Rota(ip_destino, metrica + 1,
-	 * sender)); } } }
-	 */
 	public void atualizaTabela(String tabelas, DatagramPacket dp) {
-		String ip_saida = dp.getAddress().getHostAddress() + ":" + dp.getPort();
+		String ip_saida = dp.getAddress().getHostAddress().trim();
 		System.out.println("IP: " + ip_saida);
 		System.out.println("Mensagem: " + tabelas);
 
 		if (tabelas.equals("!")) {
-			if (!ip_saida.contains(ipLocal)) {
+			if (this.tabelaRoteamento.containsKey(ip_saida)) {
+				this.tabelaRoteamento.get(ip_saida).atualizaValidade();
+			} else {
 				this.tabelaRoteamento.put(ip_saida, new Rota(ip_saida, 1, ip_saida));
-				System.out.println("Primeira InserÃ§Ã£o");
 			}
+			
+			System.out.println("Primeira Inserção");
 		} else {
+			// Adiciona saida caso nâo tem
+			if (this.tabelaRoteamento.containsKey(ip_saida)) {
+				this.tabelaRoteamento.get(ip_saida).atualizaValidade();
+			} else {
+				this.tabelaRoteamento.put(ip_saida, new Rota(ip_saida, 1, ip_saida));
+			}
+			
+			// quebra mensagem
 			for (String linha : tabelas.split("\\*")) {
 				if (!linha.isEmpty() && linha != null) {
 					String linhaSplit[] = linha.split(";");
 					String ip_destino = linhaSplit[0];
 					Integer metrica = Integer.parseInt(linhaSplit[1]);
-
-					// Adiciona os outros
-					this.tabelaRoteamento.put(ip_destino, new Rota(ip_destino, metrica, ip_saida));
-
-					if (this.tabelaRoteamento.get(ip_saida) == null) {
-						// Adiciona os outros
-						this.tabelaRoteamento.put(ip_saida, new Rota(ip_saida, 1, ip_saida));
-					}
-
-					Rota rotaDestino = this.tabelaRoteamento.get(ip_destino);
-					if (rotaDestino.getIpDestino()
-							.equalsIgnoreCase(this.tabelaRoteamento.get(ip_saida).getIpDestino())) {
-						// if
-						// (rotaDestino.getIpDestino().contentEquals(ip_saida))
-						// {
-						continue;
-					} else if (this.tabelaRoteamento.get(ip_saida) == null) {
-						Rota novaRota = new Rota(ip_destino, 1, ip_saida);
-						this.tabelaRoteamento.put(ip_destino, novaRota);
-					} else if (rotaDestino
-							.getMetrica() > (metrica + this.tabelaRoteamento.get(ip_saida).getMetrica())) {
-						System.out.println("atualiza metrica");
-						rotaDestino.setIpDestino(ip_saida);
-						rotaDestino.setMetrica((metrica + this.tabelaRoteamento.get(ip_saida).getMetrica()));
-						rotaDestino.updateValidade();
+					//Integer metricaDestino = (this.tabelaRoteamento.get(ip_saida) != null ? this.tabelaRoteamento.get(ip_saida).getMetrica() : 0);
+					
+					if (!ip_destino.equalsIgnoreCase(ipLocal)) {
+						if (!this.tabelaRoteamento.containsKey(ip_destino)) {
+							this.tabelaRoteamento.put(ip_destino, new Rota(ip_destino, metrica + 1, ip_saida));
+						} else {
+							Rota rotaDestino = this.tabelaRoteamento.get(ip_destino);
+							
+							// atualiza metricas
+							if (rotaDestino.getMetrica() > metrica - 1) {
+								rotaDestino.setIpSaida(ip_saida);
+								rotaDestino.setMetrica(metrica + 1);
+								rotaDestino.atualizaValidade();
+							}
+						}
 					}
 				}
-
-				/*
-				 * continue; else if (myRoutingTable.get(tableEntry.getKey()) ==
-				 * null) { RoutingInfo newDest = new
-				 * RoutingInfo(tableEntry.getValue().destPort,
-				 * incommingPacket.source, tableEntry.getValue().hopCount +
-				 * getCost(incommingPacket.source));
-				 * myRoutingTable.put(tableEntry.getValue().destPort, newDest);
-				 * } else if ((myRoutingTable.get(tableEntry.getKey()).hopCount)
-				 * > (tableEntry.getValue().hopCount) +
-				 * getCost(incommingPacket.source)) {
-				 * myRoutingTable.get(tableEntry.getKey()).hopCount =
-				 * tableEntry.getValue().hopCount +
-				 * getCost(incommingPacket.source);
-				 * myRoutingTable.get(tableEntry.getKey()).nextPort =
-				 * incommingPacket.source; }
-				 * 
-				 * if (!linha.isEmpty() && linha != null) { String linhaSplit[]
-				 * = linha.split(";"); String ip_destino = linhaSplit[0];
-				 * Integer metrica = Integer.parseInt(linhaSplit[1]); Rota
-				 * rotaDestino = this.tabelaRoteamento.get(ip_destino); //
-				 * .equalsIgnoreCase(endereco);
-				 * 
-				 * if (rotaDestino != null &&
-				 * rotaDestino.getIpSaida().equalsIgnoreCase(ip_destino)) {
-				 * System.out.println("Entrou aqui");
-				 * 
-				 * // else if //
-				 * ((myRoutingTable.get(tableEntry.getKey()).hopCount) > //
-				 * (tableEntry.getValue().hopCount) // +
-				 * getCost(incommingPacket.source)) { if (metrica <
-				 * rotaDestino.getMetrica()) {
-				 * System.out.println("atualiza metrica");
-				 * rotaDestino.setIpDestino(ip_saida);
-				 * rotaDestino.setMetrica(rotaDestino.getMetrica() + 1);
-				 * rotaDestino.updateValidade(); } } else if
-				 * (this.tabelaRoteamento.get(ip_saida) == null) {
-				 * this.tabelaRoteamento.put(ip_saida, new Rota(ip_saida, 1,
-				 * ip_destino)); }
-				 * 
-				 * }
-				 */
 			}
 		}
 
 		this.tempo += 10;
-		if (tempo > 30) {
-			System.out.println("remover");
+		if (tempo == 30) {
 			this.tempo = 0;
-			this.limparTabela();
+			if (this.limparTabela()) {
+				System.out.println("ROTA REMOVIDA");
+			}
 		}
 
 		System.out.println(get_table());
-		// System.out.println(sender + ": " + tabelas);
 	}
 
 	/**
-	 * 
+	 * Verifica se precisa remover algo
 	 * @return
 	 */
 	public boolean limparTabela() {
@@ -174,14 +91,18 @@ public class TabelaRoteamento {
 		String rotaID;
 		Rota rotaDados;
 
-		for (HashMap.Entry<String, Rota> rota : this.tabelaRoteamento.entrySet()) {
-			rotaID = rota.getKey();
-			rotaDados = rota.getValue();
-
-			if (rotaDados.getStatus().equalsIgnoreCase("Inativo")
-					|| LocalDateTime.now().withNano(0).isEqual(rotaDados.getValidade()))
-				if (this.tabelaRoteamento.remove(rotaID) != null)
-					removido = true;
+		synchronized (this.tabelaRoteamento) {
+			for (HashMap.Entry<String, Rota> rota : this.tabelaRoteamento.entrySet()) {
+				rotaID = rota.getKey();
+				rotaDados = rota.getValue();
+	
+				if (rotaDados.getStatus().equalsIgnoreCase("Inativo")
+						|| LocalDateTime.now().withNano(0).isBefore(rotaDados.getValidade()))
+					if (this.tabelaRoteamento.remove(rotaID) != null)
+						removido = true;
+				
+				rota.setValue(this.tabelaRoteamento.v(rotaID));
+			}
 		}
 
 		return removido;
@@ -211,7 +132,7 @@ public class TabelaRoteamento {
 		String fort = "%-20s | %-7s | %-20s | %-7s | %-3s \n";
 
 		sb.append("\n");
-		sb.append(String.format(fort, "Origem", "MÃ©trica", "Destino", "Status", "Validade"));
+		sb.append(String.format(fort, "Origem", "Métrica", "Destino", "Status", "Validade"));
 		sb.append("---------------------|---------|----------------------|---------|------------------ \n");
 
 		for (Rota host : tabelaRoteamento.values())

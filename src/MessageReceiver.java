@@ -32,14 +32,9 @@ public class MessageReceiver implements Runnable {
 
 				// Aguarda o recebimento de uma mensagem
 				serverSocket.receive(recebePacote);
-
-				System.out.println(
-						"Recebendo: " + recebePacote.getAddress().getHostAddress() + ":" + recebePacote.getPort());
-
+				
 				// Atualiza dados na tabela
-				// synchronized (TabelaRoteamento) {
 				tabela.atualizaTabela(new String(recebePacote.getData()).trim(), recebePacote);
-				// }
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
